@@ -437,12 +437,16 @@ export default function ChatPage() {
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="flex h-14 items-center gap-4 border-b px-4 lg:px-6">
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
+          <Sheet>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+              {/* Add your sheet content here */}
+            </SheetContent>
+          </Sheet>
           <div className="md:hidden">
             <KonaiiLogo />
           </div>

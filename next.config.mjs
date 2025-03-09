@@ -1,10 +1,3 @@
-let userConfig = undefined
-try {
-  userConfig = await import('./v0-user-next.config')
-} catch (e) {
-  // ignore error
-}
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -16,33 +9,26 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  webpack: (config, { isServer }) => {
+    // Add a rule to handle the undici module
+    config.module.rules.push({
+      test: /node_modules\/undici\/.*\.js$/,
+      loader: 'babel-loader',
+      options: {
+        presets: ['@babel/preset-env'],
+      },
+    });
+
+    return config;
+  },
   experimental: {
     webpackBuildWorker: true,
-    parallelServerBuildTraces: true,
     parallelServerCompiles: true,
+    parallelServerBuildTraces: true,
   },
+  // Disable static page generation for pages that need Firebase
+  staticPageGenerationTimeout: 1000,
+  output: 'standalone',
 }
 
-mergeConfig(nextConfig, userConfig)
-
-function mergeConfig(nextConfig, userConfig) {
-  if (!userConfig) {
-    return
-  }
-
-  for (const key in userConfig) {
-    if (
-      typeof nextConfig[key] === 'object' &&
-      !Array.isArray(nextConfig[key])
-    ) {
-      nextConfig[key] = {
-        ...nextConfig[key],
-        ...userConfig[key],
-      }
-    } else {
-      nextConfig[key] = userConfig[key]
-    }
-  }
-}
-
-export default nextConfig
+export default nextConfig;

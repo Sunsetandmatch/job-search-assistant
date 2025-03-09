@@ -1,5 +1,5 @@
 import { openai } from "@ai-sdk/openai"
-import { streamText } from "ai"
+import { OpenAIStream } from "ai"
 
 export async function POST(req: Request) {
   try {
@@ -53,12 +53,12 @@ export async function POST(req: Request) {
     //   console.error('Failed to log conversation:', error)
     // }
 
-    const result = streamText({
-      model: openai("gpt-4o"),
+    const stream = await OpenAIStream({
+      model: "gpt-4",
       messages: [{ role: "system", content: systemPrompt }, ...messages],
     })
 
-    return result.toDataStreamResponse()
+    return new Response(stream)
   } catch (error) {
     console.error("Chat error:", error)
     return new Response(
