@@ -1,5 +1,10 @@
-import { openai } from "@ai-sdk/openai"
-import { OpenAIStream } from "ai"
+import OpenAI from 'openai';
+import { OpenAIStream, StreamingTextResponse } from 'ai';
+
+// Create an OpenAI API client (that's edge friendly!)
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(req: Request) {
   try {
@@ -53,12 +58,21 @@ export async function POST(req: Request) {
     //   console.error('Failed to log conversation:', error)
     // }
 
-    const stream = await OpenAIStream({
-      model: "gpt-4",
-      messages: [{ role: "system", content: systemPrompt }, ...messages],
-    })
+    // Request the OpenAI API for the response
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4',
+      stream: true,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages
+      ],
+    });
 
-    return new Response(stream)
+    // Convert the response into a friendly stream
+    const stream = OpenAIStream(response);
+
+    // Return a StreamingTextResponse, which can be consumed by the client
+    return new StreamingTextResponse(stream);
   } catch (error) {
     console.error("Chat error:", error)
     return new Response(

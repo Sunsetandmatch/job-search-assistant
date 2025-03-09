@@ -55,9 +55,10 @@ export default function ChatPage() {
   const [suggestedReplies, setSuggestedReplies] = useState<SuggestedReply[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [userPreferences, setUserPreferences] = useState<UserPreferences>({})
   const [jobListings, setJobListings] = useState<JobListing[]>([])
+  const [authChecked, setAuthChecked] = useState(false)
 
   const [userProfile, setUserProfile] = useState({
     linkedinUrl: "",
@@ -175,6 +176,29 @@ export default function ChatPage() {
     handleSubmit(e)
   }
 
+  // Initialize user profile from localStorage
+  useEffect(() => {
+    const storedProfile = localStorage.getItem("userProfile")
+    const storedLinkedinUrl = localStorage.getItem("linkedinUrl")
+    const storedEmail = localStorage.getItem("emailForSignIn")
+
+    if (storedProfile) {
+      const profile = JSON.parse(storedProfile)
+      setUserProfile({
+        linkedinUrl: profile.linkedinUrl || storedLinkedinUrl || "",
+        email: profile.email || storedEmail || "",
+        profileComplete: true,
+      })
+    } else if (storedLinkedinUrl && storedEmail) {
+      setUserProfile({
+        linkedinUrl: storedLinkedinUrl,
+        email: storedEmail,
+        profileComplete: true,
+      })
+    }
+    setIsLoading(false)
+  }, [])
+
   // Check authentication on component mount
   useEffect(() => {
     if (!auth) {
@@ -187,10 +211,23 @@ export default function ChatPage() {
       if (!user) {
         router.push('/login');
       }
+      setAuthChecked(true)
+      setIsLoading(false)
     });
 
     return () => unsubscribe();
   }, [router]);
+
+  if (!authChecked || isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   // Initialize chat with welcome message when profile is loaded
   useEffect(() => {

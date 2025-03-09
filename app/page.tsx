@@ -4,19 +4,36 @@ import type React from "react"
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import { KonaiiLogo } from "@/components/konaii-logo"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
+import { auth } from "@/lib/firebase"
+import { onAuthStateChanged } from "firebase/auth"
 
 export default function Home() {
   const router = useRouter()
   const [linkedinUrl, setLinkedinUrl] = useState("")
   const [email, setEmail] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!auth) {
+      console.error('Firebase auth not initialized');
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.push('/chat');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
