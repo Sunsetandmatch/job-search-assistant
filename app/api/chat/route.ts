@@ -1,12 +1,28 @@
 import OpenAI from 'openai';
 import { OpenAIStream, StreamingTextResponse } from 'ai';
 
+// Validate environment variables
+if (!process.env.OPENAI_API_KEY) {
+  throw new Error('OPENAI_API_KEY environment variable is not set. Please set it in your Vercel project settings.');
+}
+
 // Create an OpenAI API client (that's edge friendly!)
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+export const runtime = 'edge';
+
 export async function POST(req: Request) {
+  if (!process.env.OPENAI_API_KEY) {
+    return new Response(
+      JSON.stringify({
+        message: 'OpenAI API key not configured. Please set the OPENAI_API_KEY environment variable.',
+      }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
     const { messages } = await req.json()
 
@@ -58,7 +74,6 @@ export async function POST(req: Request) {
     //   console.error('Failed to log conversation:', error)
     // }
 
-    // Request the OpenAI API for the response
     const response = await openai.chat.completions.create({
       model: 'gpt-4',
       stream: true,
@@ -68,16 +83,15 @@ export async function POST(req: Request) {
       ],
     });
 
-    // Convert the response into a friendly stream
-    const stream = OpenAIStream(response);
-
-    // Return a StreamingTextResponse, which can be consumed by the client
-    return new StreamingTextResponse(stream);
+    return new StreamingTextResponse(OpenAIStream(response));
   } catch (error) {
     console.error("Chat error:", error)
     return new Response(
-      JSON.stringify({ message: error instanceof Error ? error.message : "Chat processing failed" }),
-      { status: 500, headers: { "Content-Type": "application/json" } },
+      JSON.stringify({ 
+        message: error instanceof Error ? error.message : "Chat processing failed",
+        details: process.env.NODE_ENV === 'development' ? error : undefined
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     )
   }
 }
