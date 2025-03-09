@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { auth } from "@/lib/firebase"
-import { sendSignInLinkToEmail, onAuthStateChanged } from "firebase/auth"
+import { sendSignInLinkToEmail, onAuthStateChanged, Auth } from "firebase/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,7 +22,7 @@ export default function LoginPage() {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
       if (user) {
         router.push('/chat');
       }
@@ -36,12 +36,16 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
+      if (!auth) {
+        throw new Error('Firebase auth not initialized');
+      }
+
       const actionCodeSettings = {
         url: `${window.location.origin}/chat`,
         handleCodeInApp: true,
       }
 
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings)
+      await sendSignInLinkToEmail(auth as Auth, email, actionCodeSettings)
       
       // Save the email and LinkedIn URL to localStorage for later use
       localStorage.setItem("emailForSignIn", email)

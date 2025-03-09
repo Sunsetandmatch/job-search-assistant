@@ -35,7 +35,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Toaster } from "@/components/ui/toaster"
 import { toast } from "@/components/ui/use-toast"
 import { auth } from "@/lib/firebase"
-import { onAuthStateChanged } from "firebase/auth"
+import { onAuthStateChanged, Auth } from "firebase/auth"
 import { Message, JobListing, UserPreferences } from "@/lib/types"
 import { ChatMessage } from "@/components/chat/ChatMessage"
 import { ChatInput } from "@/components/chat/ChatInput"
@@ -183,7 +183,7 @@ export default function ChatPage() {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth as Auth, (user) => {
       if (!user) {
         router.push('/login');
       }
@@ -225,12 +225,13 @@ export default function ChatPage() {
       // Get the stored LinkedIn URL
       const linkedinUrl = localStorage.getItem("linkedinUrl")
 
-      // Prepare the request to Make.com webhook
+      const idToken = auth?.currentUser ? await auth.currentUser.getIdToken() : null;
+      
       const response = await fetch("https://hook.eu2.make.com/4enjoiwvv2tv5wivqdphpspy5e1gjnta", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${await auth.currentUser?.getIdToken()}`,
+          ...(idToken ? { "Authorization": `Bearer ${idToken}` } : {}),
         },
         body: JSON.stringify({
           message: content,
