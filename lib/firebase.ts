@@ -11,16 +11,17 @@ console.log('Firebase environment variables status:', {
   storageBucket: !!process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: !!process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: !!process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: !!process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 });
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA0C29GJe_bvInNSEUKXGYMyfoYn6q6wfY",
-  authDomain: "konaii.firebaseapp.com",
-  projectId: "konaii",
-  storageBucket: "konaii.firebasestorage.app",
-  messagingSenderId: "56639345095",
-  appId: "1:56639345095:web:214b53c909f2f907a349e2",
-  measurementId: "G-T0DW5HMXCX"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
@@ -30,19 +31,30 @@ let db: Firestore | null = null;
 let analytics: Analytics | null = null;
 
 try {
-  // Initialize Firebase
-  if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
+  // Only initialize Firebase if all required config values are present
+  if (
+    firebaseConfig.apiKey &&
+    firebaseConfig.authDomain &&
+    firebaseConfig.projectId &&
+    firebaseConfig.storageBucket &&
+    firebaseConfig.messagingSenderId &&
+    firebaseConfig.appId
+  ) {
+    if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+    } else {
+      app = getApps()[0];
+    }
+    
+    auth = getAuth(app);
+    db = getFirestore(app);
+    
+    // Only initialize analytics on the client side and if measurementId is present
+    if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
+      analytics = getAnalytics(app);
+    }
   } else {
-    app = getApps()[0];
-  }
-  
-  auth = getAuth(app);
-  db = getFirestore(app);
-  
-  // Only initialize analytics on the client side
-  if (typeof window !== 'undefined') {
-    analytics = getAnalytics(app);
+    console.error('Missing required Firebase configuration values');
   }
 } catch (error) {
   console.error('Firebase initialization error:', error);
