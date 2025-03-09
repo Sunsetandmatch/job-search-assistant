@@ -177,14 +177,20 @@ export default function ChatPage() {
 
   // Check authentication on component mount
   useEffect(() => {
+    if (!auth) {
+      console.error('Firebase auth not initialized. Redirecting to login...');
+      router.push('/login');
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
-        router.push("/login")
+        router.push('/login');
       }
-    })
+    });
 
-    return () => unsubscribe()
-  }, [router])
+    return () => unsubscribe();
+  }, [router]);
 
   // Initialize chat with welcome message when profile is loaded
   useEffect(() => {
